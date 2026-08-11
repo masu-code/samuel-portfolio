@@ -2,43 +2,39 @@ import type { ProjectEntry } from '../types/content'
 
 export const featuredProjects: ProjectEntry[] = [
   {
-    title: 'Proyecto destacado 1',
+    title: 'Homecam — Client & Contract Management',
     description:
-      'Descripción placeholder del proyecto destacado: qué problema resuelve y qué lo hace interesante.',
+      'Client and contract management platform for a security electronics and solar panel company, built from scratch as a native iOS app with a companion web app.',
     image: '/images/projects/placeholder-1.jpg',
-    tags: ['React', 'TypeScript'],
-    githubUrl: 'https://github.com/',
-    liveUrl: 'https://example.com',
+    tags: ['iOS', 'Web'],
   },
   {
-    title: 'Proyecto destacado 2',
-    description: 'Descripción placeholder de un segundo proyecto destacado.',
+    title: 'TeleVault',
+    description:
+      'A personal file manager that uses Telegram as its storage backend — organizes files already in Telegram into folders, with in-app preview for photos and video. Built for Android and Windows.',
     image: '/images/projects/placeholder-2.jpg',
-    tags: ['Node.js', 'PostgreSQL'],
-    githubUrl: 'https://github.com/',
+    tags: ['Flutter', 'Dart'],
   },
 ]
 
 export const projects: ProjectEntry[] = [
   {
-    title: 'Proyecto secundario 1',
-    description: 'Descripción breve placeholder.',
+    title: 'Homecam Shopify Store',
+    description: 'E-commerce storefront built end-to-end on Shopify for the same company.',
     image: '/images/projects/placeholder-3.jpg',
-    tags: ['Python'],
-    githubUrl: 'https://github.com/',
+    tags: ['Shopify', 'Liquid'],
   },
   {
-    title: 'Proyecto secundario 2',
-    description: 'Descripción breve placeholder.',
+    title: 'Homecam Canvassing App',
+    description: 'Native mobile canvassing app built from the ground up for the sales team.',
     image: '/images/projects/placeholder-4.jpg',
-    tags: ['Flutter'],
-    githubUrl: 'https://github.com/',
+    tags: ['Mobile'],
   },
   {
-    title: 'Proyecto secundario 3',
-    description: 'Descripción breve placeholder.',
+    title: 'Regalado Group',
+    description: 'Real estate listings website built on Joomla for Regalado Group.',
     image: '/images/projects/placeholder-5.jpg',
-    tags: ['JavaScript'],
-    githubUrl: 'https://github.com/',
+    tags: ['Joomla', 'PHP'],
+    liveUrl: 'https://regaladogroup.net/',
   },
 ]

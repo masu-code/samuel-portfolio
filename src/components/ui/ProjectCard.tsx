@@ -8,22 +8,43 @@ function GithubIcon() {
   )
 }
 
+function ExternalLinkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5">
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  )
+}
+
 export default function ProjectCard({ project }: { project: ProjectEntry }) {
   return (
     <div className="flex flex-col rounded-lg border border-navy-lightest bg-navy-light/40 p-6 transition-colors hover:border-mint/50">
       <div className="flex items-start justify-between">
         <h3 className="font-serif text-lg font-bold text-slate-lightest">{project.title}</h3>
-        {project.githubUrl && (
-          <a
-            href={project.githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`${project.title} en GitHub`}
-            className="text-slate hover:text-mint"
-          >
-            <GithubIcon />
-          </a>
-        )}
+        <div className="flex items-center gap-3">
+          {project.githubUrl && (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${project.title} en GitHub`}
+              className="text-slate hover:text-mint"
+            >
+              <GithubIcon />
+            </a>
+          )}
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${project.title} en vivo`}
+              className="text-slate hover:text-mint"
+            >
+              <ExternalLinkIcon />
+            </a>
+          )}
+        </div>
       </div>
       <p className="mt-3 flex-1 text-sm text-slate">{project.description}</p>
       <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-slate-light">
