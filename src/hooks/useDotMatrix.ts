@@ -7,6 +7,8 @@ interface Dot {
   alpha: number
   glow: number
   order: number
+  ox: number
+  oy: number
 }
 
 const SIZE = 320
@@ -16,6 +18,9 @@ const BASE_RADIUS = 1.1
 const FACE_CENTER = { x: SIZE * 0.52, y: SIZE * 0.34 }
 const FACE_RADIUS = SIZE * 0.17
 const SPARKLE = { x: SIZE * 0.58, y: SIZE * 0.58 }
+const HOVER_RADIUS = 64
+const HOVER_STRENGTH = 16
+const HOVER_EASE = 0.15
 
 function drawFallbackSilhouette(ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, SIZE, SIZE)
@@ -159,6 +164,8 @@ function buildFlowField(mask: Uint8Array): Dot[] {
         alpha: Math.min(1, 0.55 + glow * 0.45),
         glow,
         order: order++,
+        ox: 0,
+        oy: 0,
       })
     }
   }
@@ -203,8 +210,11 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const duration = prefersReducedMotion ? 0 : 1400
     const maxOrder = dots.reduce((max, d) => Math.max(max, d.order), 0) || 1
-    let rafId: number
     const start = performance.now()
+
+    const mouse = { x: -9999, y: -9999, active: false }
+    let rafId = 0
+    let loopRunning = false
 
     const drawSparkle = (alpha: number) => {
       const { x, y } = SPARKLE
@@ -226,14 +236,33 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
     const render = (now: number) => {
       const elapsed = now - start
       const progress = duration === 0 ? 1 : Math.min(1, elapsed / duration)
+      const interactive = progress >= 1 && !prefersReducedMotion
+      let stillSettling = false
 
       ctx.clearRect(0, 0, SIZE, SIZE)
       for (const dot of dots) {
         const threshold = dot.order / maxOrder
         if (progress < threshold) continue
         const reveal = Math.min(1, (progress - threshold) * 6)
+
+        if (interactive) {
+          const dx = dot.x - mouse.x
+          const dy = dot.y - mouse.y
+          const dist = Math.hypot(dx, dy)
+          let targetOx = 0
+          let targetOy = 0
+          if (mouse.active && dist < HOVER_RADIUS && dist > 0.01) {
+            const falloff = 1 - dist / HOVER_RADIUS
+            targetOx = (dx / dist) * falloff * HOVER_STRENGTH
+            targetOy = (dy / dist) * falloff * HOVER_STRENGTH
+          }
+          dot.ox += (targetOx - dot.ox) * HOVER_EASE
+          dot.oy += (targetOy - dot.oy) * HOVER_EASE
+          if (Math.abs(dot.ox) > 0.05 || Math.abs(dot.oy) > 0.05) stillSettling = true
+        }
+
         ctx.beginPath()
-        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2)
+        ctx.arc(dot.x + dot.ox, dot.y + dot.oy, dot.radius, 0, Math.PI * 2)
         const color = dot.glow > 0.5 ? '255, 255, 255' : '100, 255, 218'
         ctx.fillStyle = `rgba(${color}, ${dot.alpha * reveal})`
         ctx.fill()
@@ -243,13 +272,43 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
         drawSparkle(Math.min(1, (progress - 0.85) * 6))
       }
 
-      if (progress < 1) {
+      if (progress < 1 || mouse.active || stillSettling) {
+        rafId = requestAnimationFrame(render)
+      } else {
+        loopRunning = false
+      }
+    }
+
+    const ensureLoop = () => {
+      if (!loopRunning) {
+        loopRunning = true
         rafId = requestAnimationFrame(render)
       }
     }
 
-    rafId = requestAnimationFrame(render)
-    return () => cancelAnimationFrame(rafId)
+    const handlePointerMove = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      mouse.x = ((event.clientX - rect.left) / rect.width) * SIZE
+      mouse.y = ((event.clientY - rect.top) / rect.height) * SIZE
+      mouse.active = true
+      ensureLoop()
+    }
+
+    const handlePointerLeave = () => {
+      mouse.active = false
+      ensureLoop()
+    }
+
+    canvas.addEventListener('pointermove', handlePointerMove)
+    canvas.addEventListener('pointerleave', handlePointerLeave)
+
+    ensureLoop()
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      canvas.removeEventListener('pointermove', handlePointerMove)
+      canvas.removeEventListener('pointerleave', handlePointerLeave)
+    }
   }, [ready, canvasRef])
 
   return { size: SIZE }
