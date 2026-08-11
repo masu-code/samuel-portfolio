@@ -43,7 +43,11 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
       )}
 
       <div className="relative overflow-hidden rounded-lg border border-navy-lightest">
-        <ImageWithFallback src={project.image} alt={project.title} className="h-72 w-full object-cover sm:h-96" />
+        <ImageWithFallback
+          src={project.image}
+          alt={project.title}
+          className="h-72 w-full bg-navy-light object-contain sm:h-96"
+        />
 
         <div className="absolute inset-x-0 bottom-0 bg-navy/90 p-6 backdrop-blur">
           <h3 className="font-serif text-xl font-bold text-slate-lightest">{project.title}</h3>

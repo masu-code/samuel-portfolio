@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function ImageWithFallback({
   src,
@@ -10,6 +10,10 @@ export default function ImageWithFallback({
   className?: string
 }) {
   const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
 
   if (failed) {
     return (
