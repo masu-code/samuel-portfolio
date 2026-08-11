@@ -2,24 +2,31 @@ import type { ExperienceEntry } from '../types/content'
 
 export const experience: ExperienceEntry[] = [
   {
-    company: 'Empresa Placeholder 1',
-    role: 'Puesto placeholder',
-    dateRange: 'Ene 2024 — Presente',
-    url: 'https://example.com',
+    company: 'Homecam',
+    role: 'Software Engineer',
+    dateRange: '2026 — Presente',
     bullets: [
-      'Logro placeholder uno con métrica de impacto concreta.',
-      'Logro placeholder dos describiendo una responsabilidad clave.',
-      'Logro placeholder tres.',
+      'Built the company’s client and contract management platform from scratch, shipped as a native iOS app with a companion web app.',
+      'Developed the company’s Shopify e-commerce store end-to-end.',
+      'Built a native mobile canvassing app for the sales team from the ground up.',
     ],
   },
   {
-    company: 'Empresa Placeholder 2',
-    role: 'Puesto placeholder anterior',
-    dateRange: 'Jun 2022 — Dic 2023',
-    url: 'https://example.com',
+    company: 'Freelance',
+    role: 'Software Developer',
+    dateRange: '2023 — 2026',
     bullets: [
-      'Logro placeholder describiendo un proyecto relevante.',
-      'Logro placeholder describiendo una mejora técnica.',
+      'Delivered mobile and web development projects for independent clients.',
+    ],
+  },
+  {
+    company: 'Regalado Group',
+    role: 'Technical Support & Web Developer',
+    dateRange: '2023',
+    url: 'https://regaladogroup.net/',
+    bullets: [
+      'Provided technical support for the team’s internal tools and systems.',
+      'Designed and developed the company’s real estate listings website (regaladogroup.net) on Joomla.',
     ],
   },
 ]
