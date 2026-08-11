@@ -19,9 +19,10 @@ export const featuredProjects: ProjectEntry[] = [
 
 export const projects: ProjectEntry[] = [
   {
-    title: 'Homecam Shopify Store',
-    description: 'E-commerce storefront built end-to-end on Shopify for the same company.',
-    image: '/images/projects/placeholder-3.jpg',
+    title: 'Heavenly Art — Shopify Store',
+    description: 'E-commerce storefront built end-to-end on Shopify.',
+    image: '/images/projects/shopify-store.png',
+    liveUrl: 'https://heavenlyart.co/',
     tags: ['Shopify', 'Liquid'],
   },
   {
