@@ -18,13 +18,10 @@ export default function About() {
         className="grid gap-12 md:grid-cols-[1fr_240px]"
       >
         <div>
-          {about.paragraphs.map((paragraph, i) => (
-            <p key={i} className="mb-4 leading-relaxed text-slate">
-              {paragraph}
-            </p>
-          ))}
+          <p className="mb-4 leading-relaxed text-slate">{about.intro}</p>
           <p className="text-slate">Here are some technologies I have been working with:</p>
           <TechList items={about.techList} />
+          <p className="mt-4 leading-relaxed text-slate">{about.closing}</p>
         </div>
 
         <div className="justify-self-center md:justify-self-end">

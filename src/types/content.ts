@@ -14,8 +14,9 @@ export interface SiteInfo {
 }
 
 export interface AboutContent {
-  paragraphs: string[]
+  intro: string
   techList: string[]
+  closing: string
   photo: string
 }
 
