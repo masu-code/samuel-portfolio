@@ -1,53 +1,70 @@
 import { useEffect, useRef, useState } from 'react'
 
-interface Dot {
+interface Particle {
   x: number
   y: number
-  radius: number
-  alpha: number
-  glow: number
-  order: number
-  ox: number
-  oy: number
+  targetX: number
+  targetY: number
+  vx: number
+  vy: number
+  char: string
+  fontSize: number
+  baseAlpha: number
+  currentAlpha: number
+  delay: number
+  shimmer: number
 }
 
-const SIZE = 320
-const ROW_STEP = 5
-const COL_STEP = 4
-const BASE_RADIUS = 1.1
-const FACE_CENTER = { x: SIZE * 0.52, y: SIZE * 0.34 }
-const FACE_RADIUS = SIZE * 0.17
-const SPARKLE = { x: SIZE * 0.58, y: SIZE * 0.58 }
-const HOVER_RADIUS = 64
-const HOVER_STRENGTH = 16
-const HOVER_EASE = 0.15
+interface SamplePoint {
+  x: number
+  y: number
+  char: string
+  alpha: number
+}
 
-function drawFallbackSilhouette(ctx: CanvasRenderingContext2D) {
-  ctx.clearRect(0, 0, SIZE, SIZE)
+/** Darkest → brightest. A blank pixel renders as a space (invisible). */
+const CHARS = ' .:-=+*#%@'.split('')
+const FIT_RATIO = 0.8
+const REPULSE_RADIUS_RATIO = 0.2
+const REPULSE_STRENGTH = 4
+const MOUSE_EASE = 0.15
+const REVEAL_DURATION = 1.5
+const SETTLE_DURATION = 2.5
+const SHIMMER_WINDOW = 3
+const SCATTER_RANGE = 400
+
+function getResponsiveSize(width: number) {
+  if (width <= 480) return Math.min(220, width - 40)
+  if (width <= 768) return Math.min(280, width - 60)
+  return 400
+}
+
+function drawFallbackSilhouette(ctx: CanvasRenderingContext2D, size: number) {
+  ctx.clearRect(0, 0, size, size)
+  ctx.fillStyle = 'rgba(255,255,255,1)'
 
   // shoulders / cloak
   ctx.beginPath()
-  ctx.moveTo(SIZE * 0.12, SIZE)
-  ctx.quadraticCurveTo(SIZE * 0.5, SIZE * 0.58, SIZE * 0.88, SIZE)
+  ctx.moveTo(size * 0.12, size)
+  ctx.quadraticCurveTo(size * 0.5, size * 0.58, size * 0.88, size)
   ctx.closePath()
-  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.fill()
 
   // head
-  const cx = SIZE * 0.5
-  const cy = SIZE * 0.42
-  const r = SIZE * 0.24
+  const cx = size * 0.5
+  const cy = size * 0.42
+  const r = size * 0.24
   ctx.beginPath()
   ctx.ellipse(cx, cy, r * 0.82, r, 0, 0, Math.PI * 2)
-  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.fill()
 }
 
-async function loadDrawable(imageSrc?: string): Promise<CanvasImageSource> {
+async function loadSource(imageSrc: string | undefined, size: number): Promise<CanvasImageSource> {
   if (imageSrc) {
     try {
       return await new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image()
+        img.crossOrigin = 'anonymous'
         img.onload = () => resolve(img)
         img.onerror = reject
         img.src = imageSrc
@@ -57,140 +74,125 @@ async function loadDrawable(imageSrc?: string): Promise<CanvasImageSource> {
     }
   }
 
-  const fallback = document.createElement('canvas')
-  fallback.width = SIZE
-  fallback.height = SIZE
-  drawFallbackSilhouette(fallback.getContext('2d')!)
-  return fallback
-}
-
-function colorDistance(data: Uint8ClampedArray, i: number, ref: [number, number, number]) {
-  const dr = data[i] - ref[0]
-  const dg = data[i + 1] - ref[1]
-  const db = data[i + 2] - ref[2]
-  return Math.sqrt(dr * dr + dg * dg + db * db)
-}
-
-/** Builds a boolean silhouette mask from the source image, robust to both
- * transparent-background cutouts (used by the procedural placeholder) and
- * opaque photos with a roughly plain background. */
-function buildSilhouetteMask(source: CanvasImageSource): Uint8Array {
   const canvas = document.createElement('canvas')
-  canvas.width = SIZE
-  canvas.height = SIZE
+  canvas.width = size
+  canvas.height = size
+  drawFallbackSilhouette(canvas.getContext('2d')!, size)
+  return canvas
+}
+
+/** Samples a source image (fit to 80% of the canvas, aspect-preserved) into a
+ * sparse grid of characters, one per opaque pixel, using luminance -> glyph
+ * density from CHARS. Transparent pixels (alpha <= 128) are skipped, so a
+ * cutout photo naturally produces the silhouette shape. */
+function sampleToPoints(source: CanvasImageSource, size: number): SamplePoint[] {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
   const ctx = canvas.getContext('2d')!
-  ctx.drawImage(source, 0, 0, SIZE, SIZE)
-  const { data } = ctx.getImageData(0, 0, SIZE, SIZE)
 
-  const mask = new Uint8Array(SIZE * SIZE)
-  const corners = [
-    [2, 2],
-    [SIZE - 3, 2],
-    [2, SIZE - 3],
-    [SIZE - 3, SIZE - 3],
-  ]
-  const cornerAlpha = corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 3], 0) / 4
+  const srcWidth = 'width' in source ? (source as HTMLImageElement).naturalWidth || (source as HTMLCanvasElement).width : size
+  const srcHeight = 'height' in source ? (source as HTMLImageElement).naturalHeight || (source as HTMLCanvasElement).height : size
+  const aspect = srcWidth / srcHeight
 
-  let inside = 0
-
-  if (cornerAlpha < 200) {
-    // transparent-background cutout: alpha channel IS the silhouette
-    for (let p = 0; p < SIZE * SIZE; p++) {
-      const isInside = data[p * 4 + 3] > 40
-      mask[p] = isInside ? 1 : 0
-      if (isInside) inside++
-    }
-  } else {
-    // opaque photo: estimate background color from corners, mask = far from it
-    const bg: [number, number, number] = [
-      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4], 0) / 4,
-      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 1], 0) / 4,
-      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 2], 0) / 4,
-    ]
-    for (let p = 0; p < SIZE * SIZE; p++) {
-      const isInside = colorDistance(data, p * 4, bg) > 42
-      mask[p] = isInside ? 1 : 0
-      if (isInside) inside++
-    }
+  let fitHeight = size * FIT_RATIO
+  let fitWidth = fitHeight * aspect
+  if (fitWidth > size * FIT_RATIO) {
+    fitWidth = size * FIT_RATIO
+    fitHeight = fitWidth / aspect
   }
+  const offsetX = (size - fitWidth) / 2
+  const offsetY = (size - fitHeight) / 2
+  ctx.drawImage(source, offsetX, offsetY, fitWidth, fitHeight)
 
-  const coverage = inside / (SIZE * SIZE)
-  if (coverage < 0.04 || coverage > 0.92) {
-    // degenerate mask (near-empty or near-full) — fall back to a soft
-    // silhouette ellipse so the effect always renders something coherent
-    const cx = SIZE * 0.5
-    const cy = SIZE * 0.56
-    const rx = SIZE * 0.42
-    const ry = SIZE * 0.48
-    for (let y = 0; y < SIZE; y++) {
-      for (let x = 0; x < SIZE; x++) {
-        const nx = (x - cx) / rx
-        const ny = (y - cy) / ry
-        mask[y * SIZE + x] = nx * nx + ny * ny <= 1 ? 1 : 0
+  const { data } = ctx.getImageData(0, 0, size, size)
+  const isCompact = size <= 280
+  const h = isCompact ? 5 : 7
+  const colStep = h * 0.7
+  const rowStep = h * 1.1
+
+  const points: SamplePoint[] = []
+  for (let y = 0; y < size; y += rowStep) {
+    for (let x = 0; x < size; x += colStep) {
+      const i = (Math.floor(y) * size + Math.floor(x)) * 4
+      if (data[i + 3] > 128) {
+        const luminance = (data[i] + data[i + 1] + data[i + 2]) / 765
+        const charIndex = Math.floor(luminance * (CHARS.length - 1))
+        points.push({
+          x: Number(x.toFixed(1)),
+          y: Number(y.toFixed(1)),
+          char: CHARS[charIndex],
+          alpha: Number((0.4 + luminance * 0.6).toFixed(2)),
+        })
       }
     }
   }
-
-  return mask
+  return points
 }
 
-/** Lays out dots along gently undulating horizontal flow-lines, clipped to
- * the silhouette mask, with a brighter glow cluster around the face. */
-function buildFlowField(mask: Uint8Array): Dot[] {
-  const dots: Dot[] = []
-  let order = 0
-
-  for (let row = 0, rowIndex = 0; row < SIZE; row += ROW_STEP, rowIndex++) {
-    const phase = rowIndex * 0.35
-    const amplitude = 5 + 3 * Math.sin(rowIndex * 0.12)
-
-    for (let x = 0; x < SIZE; x += COL_STEP) {
-      const wave =
-        amplitude * Math.sin(x * 0.045 + phase) + amplitude * 0.4 * Math.sin(x * 0.11 - phase * 1.6)
-      const y = row + wave
-      if (y < 0 || y >= SIZE) continue
-
-      const mx = Math.round(x)
-      const my = Math.round(y)
-      if (mask[my * SIZE + mx] !== 1) continue
-
-      const distToFace = Math.hypot(x - FACE_CENTER.x, y - FACE_CENTER.y)
-      const glow = Math.max(0, 1 - distToFace / FACE_RADIUS)
-
-      dots.push({
-        x,
-        y,
-        radius: BASE_RADIUS + glow * 1.1,
-        alpha: Math.min(1, 0.55 + glow * 0.45),
-        glow,
-        order: order++,
-        ox: 0,
-        oy: 0,
-      })
-    }
-  }
-
-  return dots
+/** Particles start scattered randomly and spring toward their sampled target
+ * position, each with its own reveal delay and shimmer phase. */
+function createParticles(points: SamplePoint[], isCompact: boolean): Particle[] {
+  const fontSize = isCompact ? 5 : 7
+  return points.map((p) => ({
+    x: p.x + (Math.random() - 0.5) * SCATTER_RANGE,
+    y: p.y + (Math.random() - 0.5) * SCATTER_RANGE,
+    targetX: p.x,
+    targetY: p.y,
+    vx: 0,
+    vy: 0,
+    char: p.char,
+    fontSize,
+    baseAlpha: p.alpha,
+    currentAlpha: 0,
+    delay: Math.random() * 0.4,
+    shimmer: Math.random() * Math.PI * 2,
+  }))
 }
 
 export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null>, imageSrc?: string) {
-  const dotsRef = useRef<Dot[]>([])
+  const [size, setSize] = useState(() => getResponsiveSize(typeof window !== 'undefined' ? window.innerWidth : 1200))
+  const particlesRef = useRef<Particle[]>([])
+  const pointsCache = useRef(new Map<string, SamplePoint[]>())
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
+    let timeoutId: ReturnType<typeof setTimeout>
+    const onResize = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => setSize(getResponsiveSize(window.innerWidth)), 150)
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
 
-    loadDrawable(imageSrc).then((source) => {
+  useEffect(() => {
+    let cancelled = false
+    const isCompact = size <= 280
+    const cacheKey = `${imageSrc ?? 'fallback'}:${size}`
+    const cached = pointsCache.current.get(cacheKey)
+
+    if (cached) {
+      particlesRef.current = createParticles(cached, isCompact)
+      setReady(true)
+      return
+    }
+
+    loadSource(imageSrc, size).then((source) => {
       if (cancelled) return
-      const mask = buildSilhouetteMask(source)
-      dotsRef.current = buildFlowField(mask)
+      const points = sampleToPoints(source, size)
+      pointsCache.current.set(cacheKey, points)
+      particlesRef.current = createParticles(points, isCompact)
       setReady(true)
     })
 
     return () => {
       cancelled = true
     }
-  }, [imageSrc])
+  }, [imageSrc, size])
 
   useEffect(() => {
     if (!ready) return
@@ -200,116 +202,134 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
     if (!ctx) return
 
     const dpr = window.devicePixelRatio || 1
-    canvas.width = SIZE * dpr
-    canvas.height = SIZE * dpr
-    canvas.style.width = `${SIZE}px`
-    canvas.style.height = `${SIZE}px`
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    canvas.style.width = `${size}px`
+    canvas.style.height = `${size}px`
     ctx.scale(dpr, dpr)
 
-    const dots = dotsRef.current
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const duration = prefersReducedMotion ? 0 : 1400
-    const maxOrder = dots.reduce((max, d) => Math.max(max, d.order), 0) || 1
+    const fontSize = size <= 280 ? 5 : 7
+    const repulseRadius = size * REPULSE_RADIUS_RATIO
+
+    const mouseRaw = { x: -1000, y: -1000 }
+    const mouseEased = { x: -1000, y: -1000, active: false }
     const start = performance.now()
-
-    const mouse = { x: -9999, y: -9999, active: false }
     let rafId = 0
-    let loopRunning = false
 
-    const drawSparkle = (alpha: number) => {
-      const { x, y } = SPARKLE
-      const size = 5
-      ctx.save()
-      ctx.translate(x, y)
-      ctx.globalAlpha = alpha
-      ctx.fillStyle = '#ffffff'
-      ctx.beginPath()
-      ctx.moveTo(0, -size)
-      ctx.quadraticCurveTo(0, 0, size, 0)
-      ctx.quadraticCurveTo(0, 0, 0, size)
-      ctx.quadraticCurveTo(0, 0, -size, 0)
-      ctx.quadraticCurveTo(0, 0, 0, -size)
-      ctx.fill()
-      ctx.restore()
+    if (prefersReducedMotion) {
+      ctx.font = `${fontSize}px monospace`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      for (const p of particlesRef.current) {
+        ctx.fillStyle = `rgba(100, 255, 218, ${p.baseAlpha})`
+        ctx.fillText(p.char, p.targetX, p.targetY)
+      }
+      return
     }
 
-    const render = (now: number) => {
-      const elapsed = now - start
-      const progress = duration === 0 ? 1 : Math.min(1, elapsed / duration)
-      const interactive = progress >= 1 && !prefersReducedMotion
-      let stillSettling = false
+    const render = () => {
+      rafId = requestAnimationFrame(render)
 
-      ctx.clearRect(0, 0, SIZE, SIZE)
-      for (const dot of dots) {
-        const threshold = dot.order / maxOrder
-        if (progress < threshold) continue
-        const reveal = Math.min(1, (progress - threshold) * 6)
+      const particles = particlesRef.current
+      ctx.clearRect(0, 0, size, size)
+      if (!particles.length) return
 
-        if (interactive) {
-          const dx = dot.x - mouse.x
-          const dy = dot.y - mouse.y
-          const dist = Math.hypot(dx, dy)
-          let targetOx = 0
-          let targetOy = 0
-          if (mouse.active && dist < HOVER_RADIUS && dist > 0.01) {
-            const falloff = 1 - dist / HOVER_RADIUS
-            targetOx = (dx / dist) * falloff * HOVER_STRENGTH
-            targetOy = (dy / dist) * falloff * HOVER_STRENGTH
+      const elapsed = (performance.now() - start) / 1000
+      mouseEased.x += (mouseRaw.x - mouseEased.x) * MOUSE_EASE
+      mouseEased.y += (mouseRaw.y - mouseEased.y) * MOUSE_EASE
+
+      ctx.font = `${fontSize}px monospace`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+
+      for (const p of particles) {
+        const t = elapsed - p.delay
+        if (t < 0) continue
+
+        const reveal = 1 - (1 - Math.min(t / REVEAL_DURATION, 1)) ** 2
+        const isShimmering = mouseEased.active || t < SHIMMER_WINDOW
+        const shimmerDelta = isShimmering ? Math.sin(elapsed * 2 + p.shimmer) * 0.1 : 0
+        p.currentAlpha = Math.max(0, p.baseAlpha * reveal + shimmerDelta)
+
+        const settle = 1 - (1 - Math.min(t / SETTLE_DURATION, 1)) ** 3
+
+        if (mouseEased.active) {
+          const dx = p.x - mouseEased.x
+          const dy = p.y - mouseEased.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < repulseRadius && dist > 0) {
+            const force = (1 - dist / repulseRadius) * REPULSE_STRENGTH
+            p.vx += (dx / dist) * force
+            p.vy += (dy / dist) * force
           }
-          dot.ox += (targetOx - dot.ox) * HOVER_EASE
-          dot.oy += (targetOy - dot.oy) * HOVER_EASE
-          if (Math.abs(dot.ox) > 0.05 || Math.abs(dot.oy) > 0.05) stillSettling = true
         }
 
-        ctx.beginPath()
-        ctx.arc(dot.x + dot.ox, dot.y + dot.oy, dot.radius, 0, Math.PI * 2)
-        const color = dot.glow > 0.5 ? '255, 255, 255' : '100, 255, 218'
-        ctx.fillStyle = `rgba(${color}, ${dot.alpha * reveal})`
-        ctx.fill()
-      }
+        const dxTarget = p.targetX - p.x
+        const dyTarget = p.targetY - p.y
+        const stiffness = 0.01 + settle * 0.08
+        p.vx += dxTarget * stiffness
+        p.vy += dyTarget * stiffness
 
-      if (progress > 0.85) {
-        drawSparkle(Math.min(1, (progress - 0.85) * 6))
-      }
+        if (isShimmering) {
+          p.vx += Math.sin(elapsed * 0.5 + p.targetY * 0.1) * 0.15
+          p.vy += Math.cos(elapsed * 0.5 + p.targetX * 0.1) * 0.15
+          p.vx *= 0.92
+          p.vy *= 0.92
+        } else {
+          p.vx *= 0.85
+          p.vy *= 0.85
+          if (t > 4 && Math.abs(dxTarget) < 0.01 && Math.abs(dyTarget) < 0.01) {
+            p.x = p.targetX
+            p.y = p.targetY
+            p.vx = 0
+            p.vy = 0
+          }
+        }
 
-      if (progress < 1 || mouse.active || stillSettling) {
-        rafId = requestAnimationFrame(render)
-      } else {
-        loopRunning = false
+        p.x += p.vx
+        p.y += p.vy
+
+        ctx.fillStyle = `rgba(100, 255, 218, ${p.currentAlpha})`
+        ctx.fillText(p.char, p.x, p.y)
       }
     }
 
-    const ensureLoop = () => {
-      if (!loopRunning) {
-        loopRunning = true
-        rafId = requestAnimationFrame(render)
-      }
-    }
-
-    const handlePointerMove = (event: PointerEvent) => {
+    const handleMouseMove = (event: MouseEvent) => {
       const rect = canvas.getBoundingClientRect()
-      mouse.x = ((event.clientX - rect.left) / rect.width) * SIZE
-      mouse.y = ((event.clientY - rect.top) / rect.height) * SIZE
-      mouse.active = true
-      ensureLoop()
+      mouseRaw.x = event.clientX - rect.left
+      mouseRaw.y = event.clientY - rect.top
+      mouseEased.active = true
+    }
+    const resetMouse = () => {
+      mouseEased.active = false
+      mouseRaw.x = -1000
+      mouseRaw.y = -1000
+    }
+    const handleTouchMove = (event: TouchEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const touch = event.touches[0]
+      mouseRaw.x = touch.clientX - rect.left
+      mouseRaw.y = touch.clientY - rect.top
+      mouseEased.active = true
+      if (event.cancelable) event.preventDefault()
     }
 
-    const handlePointerLeave = () => {
-      mouse.active = false
-      ensureLoop()
-    }
+    canvas.addEventListener('mousemove', handleMouseMove)
+    canvas.addEventListener('mouseleave', resetMouse)
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+    canvas.addEventListener('touchend', resetMouse)
 
-    canvas.addEventListener('pointermove', handlePointerMove)
-    canvas.addEventListener('pointerleave', handlePointerLeave)
-
-    ensureLoop()
+    rafId = requestAnimationFrame(render)
 
     return () => {
       cancelAnimationFrame(rafId)
-      canvas.removeEventListener('pointermove', handlePointerMove)
-      canvas.removeEventListener('pointerleave', handlePointerLeave)
+      canvas.removeEventListener('mousemove', handleMouseMove)
+      canvas.removeEventListener('mouseleave', resetMouse)
+      canvas.removeEventListener('touchmove', handleTouchMove)
+      canvas.removeEventListener('touchend', resetMouse)
     }
-  }, [ready, canvasRef])
+  }, [ready, canvasRef, size])
 
-  return { size: SIZE }
+  return { size }
 }

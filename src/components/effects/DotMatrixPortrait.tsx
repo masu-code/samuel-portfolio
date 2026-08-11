@@ -5,5 +5,13 @@ export default function DotMatrixPortrait({ imageSrc, alt }: { imageSrc?: string
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useDotMatrix(canvasRef, imageSrc)
 
-  return <canvas ref={canvasRef} role="img" aria-label={alt} className="max-w-full" />
+  return (
+    <canvas
+      ref={canvasRef}
+      role="img"
+      aria-label={alt}
+      className="max-w-full"
+      style={{ cursor: 'crosshair', touchAction: 'none' }}
+    />
+  )
 }
