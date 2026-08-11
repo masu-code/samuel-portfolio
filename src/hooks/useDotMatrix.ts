@@ -5,37 +5,36 @@ interface Dot {
   y: number
   radius: number
   alpha: number
+  glow: number
   order: number
 }
 
 const SIZE = 320
-const STEP = 6
-const MAX_RADIUS = 1.6
+const ROW_STEP = 5
+const COL_STEP = 4
+const BASE_RADIUS = 1.1
+const FACE_CENTER = { x: SIZE * 0.52, y: SIZE * 0.34 }
+const FACE_RADIUS = SIZE * 0.17
+const SPARKLE = { x: SIZE * 0.58, y: SIZE * 0.58 }
 
 function drawFallbackSilhouette(ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, SIZE, SIZE)
 
-  // shoulders
+  // shoulders / cloak
   ctx.beginPath()
-  ctx.moveTo(SIZE * 0.15, SIZE)
-  ctx.quadraticCurveTo(SIZE * 0.5, SIZE * 0.62, SIZE * 0.85, SIZE)
+  ctx.moveTo(SIZE * 0.12, SIZE)
+  ctx.quadraticCurveTo(SIZE * 0.5, SIZE * 0.58, SIZE * 0.88, SIZE)
   ctx.closePath()
-  const shoulderGradient = ctx.createLinearGradient(0, SIZE * 0.6, 0, SIZE)
-  shoulderGradient.addColorStop(0, 'rgba(255,255,255,0.55)')
-  shoulderGradient.addColorStop(1, 'rgba(255,255,255,0.15)')
-  ctx.fillStyle = shoulderGradient
+  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.fill()
 
   // head
   const cx = SIZE * 0.5
   const cy = SIZE * 0.42
   const r = SIZE * 0.24
-  const headGradient = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r)
-  headGradient.addColorStop(0, 'rgba(255,255,255,0.95)')
-  headGradient.addColorStop(1, 'rgba(255,255,255,0.35)')
   ctx.beginPath()
   ctx.ellipse(cx, cy, r * 0.82, r, 0, 0, Math.PI * 2)
-  ctx.fillStyle = headGradient
+  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.fill()
 }
 
@@ -60,30 +59,110 @@ async function loadDrawable(imageSrc?: string): Promise<CanvasImageSource> {
   return fallback
 }
 
-function sampleToDots(source: CanvasImageSource): Dot[] {
-  const sampleCanvas = document.createElement('canvas')
-  sampleCanvas.width = SIZE
-  sampleCanvas.height = SIZE
-  const ctx = sampleCanvas.getContext('2d')!
+function colorDistance(data: Uint8ClampedArray, i: number, ref: [number, number, number]) {
+  const dr = data[i] - ref[0]
+  const dg = data[i + 1] - ref[1]
+  const db = data[i + 2] - ref[2]
+  return Math.sqrt(dr * dr + dg * dg + db * db)
+}
+
+/** Builds a boolean silhouette mask from the source image, robust to both
+ * transparent-background cutouts (used by the procedural placeholder) and
+ * opaque photos with a roughly plain background. */
+function buildSilhouetteMask(source: CanvasImageSource): Uint8Array {
+  const canvas = document.createElement('canvas')
+  canvas.width = SIZE
+  canvas.height = SIZE
+  const ctx = canvas.getContext('2d')!
   ctx.drawImage(source, 0, 0, SIZE, SIZE)
   const { data } = ctx.getImageData(0, 0, SIZE, SIZE)
 
+  const mask = new Uint8Array(SIZE * SIZE)
+  const corners = [
+    [2, 2],
+    [SIZE - 3, 2],
+    [2, SIZE - 3],
+    [SIZE - 3, SIZE - 3],
+  ]
+  const cornerAlpha = corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 3], 0) / 4
+
+  let inside = 0
+
+  if (cornerAlpha < 200) {
+    // transparent-background cutout: alpha channel IS the silhouette
+    for (let p = 0; p < SIZE * SIZE; p++) {
+      const isInside = data[p * 4 + 3] > 40
+      mask[p] = isInside ? 1 : 0
+      if (isInside) inside++
+    }
+  } else {
+    // opaque photo: estimate background color from corners, mask = far from it
+    const bg: [number, number, number] = [
+      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4], 0) / 4,
+      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 1], 0) / 4,
+      corners.reduce((sum, [x, y]) => sum + data[(y * SIZE + x) * 4 + 2], 0) / 4,
+    ]
+    for (let p = 0; p < SIZE * SIZE; p++) {
+      const isInside = colorDistance(data, p * 4, bg) > 42
+      mask[p] = isInside ? 1 : 0
+      if (isInside) inside++
+    }
+  }
+
+  const coverage = inside / (SIZE * SIZE)
+  if (coverage < 0.04 || coverage > 0.92) {
+    // degenerate mask (near-empty or near-full) — fall back to a soft
+    // silhouette ellipse so the effect always renders something coherent
+    const cx = SIZE * 0.5
+    const cy = SIZE * 0.56
+    const rx = SIZE * 0.42
+    const ry = SIZE * 0.48
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        const nx = (x - cx) / rx
+        const ny = (y - cy) / ry
+        mask[y * SIZE + x] = nx * nx + ny * ny <= 1 ? 1 : 0
+      }
+    }
+  }
+
+  return mask
+}
+
+/** Lays out dots along gently undulating horizontal flow-lines, clipped to
+ * the silhouette mask, with a brighter glow cluster around the face. */
+function buildFlowField(mask: Uint8Array): Dot[] {
   const dots: Dot[] = []
   let order = 0
-  for (let y = 0; y < SIZE; y += STEP) {
-    for (let x = 0; x < SIZE; x += STEP) {
-      const i = (y * SIZE + x) * 4
-      const luminance = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255
-      if (luminance < 0.08) continue
+
+  for (let row = 0, rowIndex = 0; row < SIZE; row += ROW_STEP, rowIndex++) {
+    const phase = rowIndex * 0.35
+    const amplitude = 5 + 3 * Math.sin(rowIndex * 0.12)
+
+    for (let x = 0; x < SIZE; x += COL_STEP) {
+      const wave =
+        amplitude * Math.sin(x * 0.045 + phase) + amplitude * 0.4 * Math.sin(x * 0.11 - phase * 1.6)
+      const y = row + wave
+      if (y < 0 || y >= SIZE) continue
+
+      const mx = Math.round(x)
+      const my = Math.round(y)
+      if (mask[my * SIZE + mx] !== 1) continue
+
+      const distToFace = Math.hypot(x - FACE_CENTER.x, y - FACE_CENTER.y)
+      const glow = Math.max(0, 1 - distToFace / FACE_RADIUS)
+
       dots.push({
         x,
         y,
-        radius: Math.max(0.4, luminance * MAX_RADIUS),
-        alpha: Math.min(1, luminance + 0.15),
+        radius: BASE_RADIUS + glow * 1.1,
+        alpha: Math.min(1, 0.55 + glow * 0.45),
+        glow,
         order: order++,
       })
     }
   }
+
   return dots
 }
 
@@ -96,7 +175,8 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
 
     loadDrawable(imageSrc).then((source) => {
       if (cancelled) return
-      dotsRef.current = sampleToDots(source)
+      const mask = buildSilhouetteMask(source)
+      dotsRef.current = buildFlowField(mask)
       setReady(true)
     })
 
@@ -121,10 +201,27 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
 
     const dots = dotsRef.current
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const duration = prefersReducedMotion ? 0 : 1100
+    const duration = prefersReducedMotion ? 0 : 1400
     const maxOrder = dots.reduce((max, d) => Math.max(max, d.order), 0) || 1
     let rafId: number
     const start = performance.now()
+
+    const drawSparkle = (alpha: number) => {
+      const { x, y } = SPARKLE
+      const size = 5
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.globalAlpha = alpha
+      ctx.fillStyle = '#ffffff'
+      ctx.beginPath()
+      ctx.moveTo(0, -size)
+      ctx.quadraticCurveTo(0, 0, size, 0)
+      ctx.quadraticCurveTo(0, 0, 0, size)
+      ctx.quadraticCurveTo(0, 0, -size, 0)
+      ctx.quadraticCurveTo(0, 0, 0, -size)
+      ctx.fill()
+      ctx.restore()
+    }
 
     const render = (now: number) => {
       const elapsed = now - start
@@ -137,8 +234,13 @@ export function useDotMatrix(canvasRef: React.RefObject<HTMLCanvasElement | null
         const reveal = Math.min(1, (progress - threshold) * 6)
         ctx.beginPath()
         ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(100, 255, 218, ${dot.alpha * reveal})`
+        const color = dot.glow > 0.5 ? '255, 255, 255' : '100, 255, 218'
+        ctx.fillStyle = `rgba(${color}, ${dot.alpha * reveal})`
         ctx.fill()
+      }
+
+      if (progress > 0.85) {
+        drawSparkle(Math.min(1, (progress - 0.85) * 6))
       }
 
       if (progress < 1) {
