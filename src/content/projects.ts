@@ -4,9 +4,16 @@ export const featuredProjects: ProjectEntry[] = [
   {
     title: 'Homecam: EcoHome',
     description:
-      'EcoHome, a canvassing platform for the sales team with a native mobile app and a web dashboard for lead mapping, built from the ground up. Customer data shown has been redacted.',
+      'EcoHome, a native mobile app for managing customer and job records for Homecam. Customer data shown has been redacted.',
     image: '/images/projects/ecohome.png',
-    tags: ['Mobile', 'Web'],
+    tags: ['Mobile'],
+  },
+  {
+    title: 'Canvassing App for Homecam',
+    description:
+      'A web dashboard for Homecam\'s canvassing team, mapping leads and tracking follow-ups. Customer data shown has been redacted.',
+    image: '/images/projects/canvassing-app-map.png',
+    tags: ['Web'],
   },
   {
     title: 'Heavenly Art: Shopify Store',
