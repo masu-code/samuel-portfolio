@@ -2,7 +2,7 @@ import type { AboutContent } from '../types/content'
 
 export const about: AboutContent = {
   intro:
-    "I'm currently a software engineer at a company that sells security electronics and solar panel systems, where I built their client and contract management app (native iOS + web) from scratch, along with their Shopify store and a native canvassing app for the sales team.",
+    "I'm a software engineer at a company specializing in security electronics and solar panel systems, where I lead the development of their core mobile and web tools. I built their client and contract management platform from scratch — a native iOS app paired with a companion web app — plus their Shopify storefront and a native canvassing app for the sales team.",
   techList: [
     'React Native',
     'Flutter',
