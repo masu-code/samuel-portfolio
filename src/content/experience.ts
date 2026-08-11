@@ -4,7 +4,7 @@ export const experience: ExperienceEntry[] = [
   {
     company: 'Homecam',
     role: 'Software Engineer',
-    dateRange: '2026 — Presente',
+    dateRange: '2026 - Presente',
     bullets: [
       'Built the company’s client and contract management platform from scratch, shipped as a native iOS app with a companion web app.',
       'Developed the company’s Shopify e-commerce store end-to-end.',
@@ -14,7 +14,7 @@ export const experience: ExperienceEntry[] = [
   {
     company: 'Freelance',
     role: 'Software Developer',
-    dateRange: '2023 — 2026',
+    dateRange: '2023 - 2026',
     bullets: [
       'Delivered mobile and web development projects for independent clients.',
     ],
