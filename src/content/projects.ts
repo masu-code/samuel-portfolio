@@ -34,7 +34,7 @@ export const projects: ProjectEntry[] = [
   {
     title: 'Regalado Group',
     description: 'Real estate listings website built on Joomla for Regalado Group.',
-    image: '/images/projects/placeholder-5.jpg',
+    image: '/images/projects/regalado-group.png',
     tags: ['Joomla', 'PHP'],
     liveUrl: 'https://regaladogroup.net/',
   },
