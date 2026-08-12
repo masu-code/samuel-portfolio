@@ -16,7 +16,9 @@ export const experience: ExperienceEntry[] = [
     role: 'Software Developer',
     dateRange: '2023 - 2026',
     bullets: [
-      'Delivered mobile and web development projects for independent clients.',
+      'Built and shipped mobile apps and web tools for a range of independent clients.',
+      'Worked across the full stack, from React and React Native front-ends to backend APIs and e-commerce integrations.',
+      'Handled projects end-to-end: requirements, design, development, and deployment.',
     ],
   },
   {

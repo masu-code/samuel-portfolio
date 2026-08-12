@@ -3,8 +3,7 @@ import type { ProjectEntry } from '../types/content'
 export const featuredProjects: ProjectEntry[] = [
   {
     title: 'Homecam: EcoHome',
-    description:
-      'EcoHome, a native mobile app for managing customer and job records for Homecam. Customer data shown has been redacted.',
+    description: 'EcoHome, a native mobile app for managing customer and job records for Homecam.',
     image: '/images/projects/ecohome.png',
     tags: ['Mobile'],
   },
@@ -29,6 +28,13 @@ export const featuredProjects: ProjectEntry[] = [
     tags: ['Joomla', 'PHP'],
     liveUrl: 'https://regaladogroup.net/',
   },
+  {
+    title: 'TeleVault',
+    description:
+      'A personal file manager that uses Telegram as its storage backend. It organizes files already in Telegram into folders, with in-app preview for photos and video. Built for Android and Windows.',
+    image: '/images/projects/placeholder-2.jpg',
+    tags: ['Flutter', 'Dart'],
+  },
 ]
 
 export const projects: ProjectEntry[] = [
@@ -38,12 +44,5 @@ export const projects: ProjectEntry[] = [
       'Client and contract management platform for a security electronics and solar panel company, built from scratch as a native iOS app with a companion web app.',
     image: '/images/projects/placeholder-1.jpg',
     tags: ['iOS', 'Web'],
-  },
-  {
-    title: 'TeleVault',
-    description:
-      'A personal file manager that uses Telegram as its storage backend. It organizes files already in Telegram into folders, with in-app preview for photos and video. Built for Android and Windows.',
-    image: '/images/projects/placeholder-2.jpg',
-    tags: ['Flutter', 'Dart'],
   },
 ]
