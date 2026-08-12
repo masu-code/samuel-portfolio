@@ -1,5 +1,13 @@
 import type { ProjectEntry } from '../../types/content'
 
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-8 w-8">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+    </svg>
+  )
+}
+
 function GithubIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -18,17 +26,17 @@ function ExternalLinkIcon() {
 
 export default function ProjectCard({ project }: { project: ProjectEntry }) {
   return (
-    <div className="flex flex-col rounded-lg border border-navy-lightest bg-navy-light/40 p-6 transition-colors hover:border-mint/50">
+    <div className="flex flex-col rounded-lg border border-transparent bg-navy-light/40 p-6 transition-colors hover:border-mint/40">
       <div className="flex items-start justify-between">
-        <h3 className="font-serif text-lg font-bold text-slate-lightest">{project.title}</h3>
-        <div className="flex items-center gap-3">
+        <FolderIcon />
+        <div className="flex items-center gap-3 text-mint">
           {project.githubUrl && (
             <a
               href={project.githubUrl}
               target="_blank"
               rel="noreferrer"
               aria-label={`${project.title} en GitHub`}
-              className="text-slate hover:text-mint"
+              className="hover:text-slate-lightest"
             >
               <GithubIcon />
             </a>
@@ -39,19 +47,16 @@ export default function ProjectCard({ project }: { project: ProjectEntry }) {
               target="_blank"
               rel="noreferrer"
               aria-label={`${project.title} en vivo`}
-              className="text-slate hover:text-mint"
+              className="hover:text-slate-lightest"
             >
               <ExternalLinkIcon />
             </a>
           )}
         </div>
       </div>
-      <p className="mt-3 flex-1 text-sm text-slate">{project.description}</p>
-      <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-slate-light">
-        {project.tags.map((tag) => (
-          <li key={tag}>{tag}</li>
-        ))}
-      </ul>
+      <h3 className="mt-4 font-serif text-lg font-bold text-slate-lightest">{project.title}</h3>
+      <p className="mt-2 flex-1 text-sm text-slate">{project.description}</p>
+      <p className="mt-4 text-xs text-slate-light">{project.tags.join(', ')}</p>
     </div>
   )
 }

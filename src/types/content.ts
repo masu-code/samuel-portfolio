@@ -13,8 +13,13 @@ export interface SiteInfo {
   social: SocialLink[]
 }
 
+export interface TextSegment {
+  text: string
+  className?: string
+}
+
 export interface AboutContent {
-  intro: string
+  introSegments: TextSegment[]
   techList: string[]
   closing: string
   photo: string

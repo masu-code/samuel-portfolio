@@ -13,7 +13,7 @@ export default function Tabs({ items }: { items: TabItem[] }) {
       <div
         role="tablist"
         aria-orientation="vertical"
-        className="flex gap-1 overflow-x-auto sm:flex-col sm:border-l sm:border-navy-lightest"
+        className="flex gap-1 overflow-x-auto sm:flex-col sm:gap-6 sm:border-r-2 sm:border-mint sm:pr-6"
       >
         {items.map((item, i) => (
           <button
@@ -22,10 +22,8 @@ export default function Tabs({ items }: { items: TabItem[] }) {
             type="button"
             aria-selected={activeIndex === i}
             onClick={() => setActiveIndex(i)}
-            className={`whitespace-nowrap px-4 py-3 text-left text-sm transition-colors sm:border-l-2 ${
-              activeIndex === i
-                ? 'bg-navy-light text-mint sm:-ml-px sm:border-mint'
-                : 'text-slate hover:bg-navy-light/50 hover:text-slate-lightest sm:border-transparent'
+            className={`whitespace-nowrap px-4 py-3 text-left text-sm transition-colors sm:px-0 sm:py-0 ${
+              activeIndex === i ? 'font-medium text-slate-lightest' : 'text-slate hover:text-slate-lightest'
             }`}
           >
             {item.label}

@@ -26,22 +26,6 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
 
   return (
     <div className="mb-12">
-      {projects.length > 1 && (
-        <div className="mb-4 flex gap-2">
-          {projects.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Slide ${i + 1}`}
-              onClick={() => goTo(i)}
-              className={`h-1.5 w-6 rounded-full transition-colors ${
-                i === index ? 'bg-mint' : 'bg-navy-lightest'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
       <div className="relative overflow-hidden rounded-lg border border-navy-lightest">
         <ImageWithFallback
           src={project.image}
@@ -49,20 +33,20 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
           className="h-72 w-full bg-navy-light object-contain sm:h-96"
         />
 
-        <div className="absolute inset-x-0 bottom-0 bg-navy/90 p-6 backdrop-blur">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent" />
+
+        <div className="absolute inset-x-0 bottom-0 p-6 text-center">
           <h3 className="font-serif text-xl font-bold text-slate-lightest">{project.title}</h3>
-          <p className="mt-1 text-sm text-slate">{project.description}</p>
-          <div className="mt-2 flex items-center gap-4">
-            <span className="font-mono text-xs uppercase tracking-wide text-slate">
-              {project.tags.join(' · ')}
-            </span>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-light">{project.description}</p>
+          <p className="mt-2 text-xs uppercase tracking-wide text-slate">{project.tags.join(' · ')}</p>
+          <div className="mt-3 flex items-center justify-center gap-4">
             {project.githubUrl && (
               <a
                 href={project.githubUrl}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${project.title} en GitHub`}
-                className="text-slate hover:text-mint"
+                className="text-slate-light hover:text-mint"
               >
                 <GithubIcon />
               </a>
@@ -73,7 +57,7 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${project.title} en vivo`}
-                className="text-slate hover:text-mint"
+                className="text-slate-light hover:text-mint"
               >
                 <ExternalLinkIcon />
               </a>
@@ -87,21 +71,37 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
               type="button"
               aria-label="Previous"
               onClick={() => goTo(index - 1)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-navy/70 p-2 text-slate-lightest hover:text-mint"
+              className="absolute left-2 top-1/2 -translate-y-1/2 px-2 text-2xl text-slate-light hover:text-mint"
             >
-              &larr;
+              &lsaquo;
             </button>
             <button
               type="button"
               aria-label="Next"
               onClick={() => goTo(index + 1)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-navy/70 p-2 text-slate-lightest hover:text-mint"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-2xl text-slate-light hover:text-mint"
             >
-              &rarr;
+              &rsaquo;
             </button>
           </>
         )}
       </div>
+
+      {projects.length > 1 && (
+        <div className="mt-4 flex justify-center gap-2">
+          {projects.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Slide ${i + 1}`}
+              onClick={() => goTo(i)}
+              className={`h-1.5 w-6 rounded-full transition-colors ${
+                i === index ? 'bg-mint' : 'bg-navy-lightest'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
