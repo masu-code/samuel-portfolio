@@ -10,9 +10,9 @@ export const featuredProjects: ProjectEntry[] = [
   {
     title: 'Canvassing App for Homecam',
     description:
-      'A web dashboard for Homecam\'s canvassing team, mapping leads and tracking follow-ups. Customer data shown has been redacted.',
+      'A web dashboard for Homecam\'s canvassing team, mapping leads and tracking follow-ups, fully connected to GoHighLevel through n8n automations. Customer data shown has been redacted.',
     image: '/images/projects/canvassing-app-map.png',
-    tags: ['Web'],
+    tags: ['Web', 'n8n', 'GoHighLevel'],
   },
   {
     title: 'Heavenly Art: Shopify Store',

@@ -33,7 +33,7 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
           className="h-72 w-full bg-navy-light object-contain sm:h-96"
         />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy from-20% via-navy/80 via-60% to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 p-6 text-center">
           <h3 className="font-serif text-xl font-bold text-slate-lightest">{project.title}</h3>
