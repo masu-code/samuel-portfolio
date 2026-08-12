@@ -34,6 +34,7 @@ export const featuredProjects: ProjectEntry[] = [
       'A personal gallery and file manager that uses Telegram as its storage backend. It organizes photos, videos, and files already in Telegram into albums, with in-app preview. Built for Android and Windows.',
     image: '/images/projects/televault.png',
     tags: ['Flutter', 'Dart'],
+    orientation: 'portrait',
   },
 ]
 

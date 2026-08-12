@@ -40,4 +40,6 @@ export interface ProjectEntry {
   tags: string[]
   githubUrl?: string
   liveUrl?: string
+  /** 'landscape' (default) fills a wide card; 'portrait' uses a narrow, tall card sized for phone screenshots. */
+  orientation?: 'landscape' | 'portrait'
 }

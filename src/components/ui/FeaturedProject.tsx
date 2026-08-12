@@ -23,14 +23,19 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
   const project = projects[index]
 
   const goTo = (i: number) => setIndex((i + projects.length) % projects.length)
+  const isPortrait = project.orientation === 'portrait'
 
   return (
     <div className="mb-12">
-      <div className="relative overflow-hidden rounded-lg border border-navy-lightest">
+      <div
+        className={`relative mx-auto overflow-hidden rounded-lg border border-navy-lightest ${
+          isPortrait ? 'aspect-[9/16] h-[32rem] sm:h-[36rem]' : 'w-full'
+        }`}
+      >
         <ImageWithFallback
           src={project.image}
           alt={project.title}
-          className="h-72 w-full bg-navy-light object-contain sm:h-96"
+          className={isPortrait ? 'h-full w-full object-cover' : 'h-72 w-full object-cover sm:h-96'}
         />
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy from-20% via-navy/80 via-60% to-transparent" />
