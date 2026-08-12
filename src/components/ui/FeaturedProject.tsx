@@ -28,14 +28,14 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
   return (
     <div className="mb-12">
       <div
-        className={`relative mx-auto overflow-hidden rounded-lg border border-navy-lightest ${
+        className={`relative mx-auto overflow-hidden rounded-lg ${
           isPortrait ? 'aspect-[9/16] h-[32rem] sm:h-[36rem]' : 'w-full'
         }`}
       >
         <ImageWithFallback
           src={project.image}
           alt={project.title}
-          className={isPortrait ? 'h-full w-full object-cover' : 'h-72 w-full object-cover sm:h-96'}
+          className={isPortrait ? 'h-full w-full object-cover' : 'h-80 w-full object-cover sm:h-[34rem]'}
         />
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy from-20% via-navy/80 via-60% to-transparent" />
@@ -93,7 +93,7 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
       </div>
 
       {projects.length > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-2 flex justify-center gap-2">
           {projects.map((_, i) => (
             <button
               key={i}
