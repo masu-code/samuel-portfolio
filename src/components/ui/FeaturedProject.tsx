@@ -28,7 +28,7 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
   return (
     <div className="mb-12">
       <div
-        className={`relative mx-auto overflow-hidden rounded-lg ${
+        className={`relative mx-auto overflow-hidden rounded-2xl ${
           isPortrait ? 'aspect-[9/16] h-[32rem] sm:h-[36rem]' : 'w-full'
         }`}
       >
@@ -38,12 +38,14 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
           className={isPortrait ? 'h-full w-full object-cover' : 'h-80 w-full object-cover sm:h-[34rem]'}
         />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy from-20% via-navy/80 via-60% to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/80 from-0% via-navy/15 via-35% to-transparent to-48%" />
 
-        <div className="absolute inset-x-0 bottom-0 p-6 text-center">
+        <div
+          className="absolute inset-x-0 bottom-0 p-6 text-center [text-shadow:0_2px_10px_rgba(10,25,47,0.95),0_1px_3px_rgba(10,25,47,0.95)]"
+        >
           <h3 className="font-serif text-xl font-bold text-slate-lightest">{project.title}</h3>
           <p className="mx-auto mt-2 max-w-xl text-sm text-slate-light">{project.description}</p>
-          <p className="mt-2 text-xs uppercase tracking-wide text-slate">{project.tags.join(' · ')}</p>
+          <p className="mt-2 text-xs uppercase tracking-wide text-slate-light">{project.tags.join(' · ')}</p>
           <div className="mt-3 flex items-center justify-center gap-4">
             {project.githubUrl && (
               <a
