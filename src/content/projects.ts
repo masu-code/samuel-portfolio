@@ -4,6 +4,7 @@ const ecoHome: ProjectEntry = {
   title: 'Homecam: EcoHome',
   description: 'EcoHome, a native mobile app for managing customer and job records for Homecam.',
   image: '/images/projects/ecohome.png',
+  liveUrl: 'https://www.ecohomereports.com/customers',
   tags: ['Mobile'],
 }
 

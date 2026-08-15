@@ -22,7 +22,6 @@ export interface AboutContent {
   introSegments: TextSegment[]
   techList: string[]
   closing: string
-  photo: string
 }
 
 export interface ExperienceEntry {

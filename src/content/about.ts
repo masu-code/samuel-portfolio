@@ -25,5 +25,4 @@ export const about: AboutContent = {
   ],
   closing:
     "In my free time, I'm into mechanics (cars, engines, anything I can tinker with) and I train Taekwondo, where I'm a 2nd Dan black belt.",
-  photo: '/images/about.jpg',
 }
