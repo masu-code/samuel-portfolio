@@ -4,7 +4,7 @@ import FeaturedProject from '../ui/FeaturedProject'
 import ProjectCard from '../ui/ProjectCard'
 import { featuredProjects, projects } from '../../content/projects'
 import { site } from '../../content/site'
-import { fadeInUp, staggerContainer } from '../../lib/animations'
+import { fadeInUp } from '../../lib/animations'
 
 export default function Software() {
   const githubUrl = site.social.find((link) => link.icon === 'github')?.url
@@ -20,19 +20,19 @@ export default function Software() {
         <FeaturedProject projects={featuredProjects} />
       </motion.div>
 
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
-          <motion.div key={project.title} variants={fadeInUp}>
+          <motion.div
+            key={project.title}
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+          >
             <ProjectCard project={project} />
           </motion.div>
         ))}
-      </motion.div>
+      </div>
     </section>
   )
 }
