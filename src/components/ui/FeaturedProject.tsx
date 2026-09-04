@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ProjectEntry } from '../../types/content'
 import ImageWithFallback from './ImageWithFallback'
@@ -29,6 +29,23 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
   const [[index, direction], setSlide] = useState<[number, number]>([0, 0])
   const project = projects[index]
   const isPortrait = project.orientation === 'portrait'
+
+  const descRef = useRef<HTMLParagraphElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [isTruncated, setIsTruncated] = useState(false)
+
+  useEffect(() => setExpanded(false), [index])
+
+  useEffect(() => {
+    if (expanded) return
+    const el = descRef.current
+    if (!el) return
+    const measure = () => setIsTruncated(el.scrollHeight > el.clientHeight + 1)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [project, expanded])
 
   // Preload every slide's image up front so switching slides is instant
   // instead of waiting on a fresh network request each time.
@@ -73,9 +90,27 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
 
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/80 from-0% via-navy/15 via-35% to-transparent to-48%" />
 
-            <div className="absolute inset-x-0 bottom-0 p-6 text-center [text-shadow:0_2px_10px_rgba(10,25,47,0.95),0_1px_3px_rgba(10,25,47,0.95)]">
+            <div
+              className={`absolute inset-x-0 bottom-0 p-6 text-center [text-shadow:0_2px_10px_rgba(10,25,47,0.95),0_1px_3px_rgba(10,25,47,0.95)] ${
+                expanded ? 'rounded-t-2xl bg-navy/90 backdrop-blur-sm' : ''
+              }`}
+            >
               <h3 className="font-serif text-xl font-bold text-slate-lightest">{project.title}</h3>
-              <p className="mx-auto mt-2 max-w-xl text-sm text-slate-light">{project.description}</p>
+              <p
+                ref={descRef}
+                className={`mx-auto mt-2 max-w-xl text-sm text-slate-light ${expanded ? '' : 'line-clamp-2 sm:line-clamp-none'}`}
+              >
+                {project.description}
+              </p>
+              {isTruncated && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((e) => !e)}
+                  className="mt-1 text-xs font-medium text-mint underline-offset-2 hover:underline sm:hidden"
+                >
+                  {expanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
               <p className="mt-2 text-xs uppercase tracking-wide text-slate-light">{project.tags.join(' · ')}</p>
               <div className="mt-3 flex items-center justify-center gap-4">
                 {project.githubUrl && (
