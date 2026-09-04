@@ -5,7 +5,7 @@ export const site: SiteInfo = {
   firstName: 'samuel',
   role: 'Software engineer',
   tagline:
-    'Software engineer / desarrollador based in Venezuela. I build [tipo de proyectos] and enjoy working on [intereses]. Reemplazar con bio real.',
+    'Software Engineer / Developer based in Venezuela. I build mobile apps and e-commerce platforms, and enjoy working on automation and CRM integrations.',
   email: 'samuel@homecam.net',
   social: [
     { label: 'Email', url: 'mailto:samuel@homecam.net', icon: 'mail' },
