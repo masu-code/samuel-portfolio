@@ -17,7 +17,7 @@ export default function Hero() {
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
         <div className="order-2 flex items-center justify-center md:order-1">
           {/* PNG con fondo transparente: el efecto usa el canal alpha como silueta */}
-          <DotMatrixPortrait imageSrc="/images/portrait.png" alt={site.name} />
+          <DotMatrixPortrait imageSrc="/images/portrait.png" alt={`Portrait of ${site.name}`} />
         </div>
 
         <div className="order-1 md:order-2">

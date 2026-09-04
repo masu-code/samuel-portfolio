@@ -67,7 +67,7 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
           >
             <ImageWithFallback
               src={project.image}
-              alt={project.title}
+              alt={`Screenshot of ${project.title}`}
               className="h-full w-full object-cover"
             />
 
