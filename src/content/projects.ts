@@ -2,10 +2,11 @@ import type { ProjectEntry } from '../types/content'
 
 const ecoHome: ProjectEntry = {
   title: 'Homecam: EcoHome',
-  description: 'EcoHome, a native mobile app for managing customer and job records for Homecam.',
+  description:
+    "EcoHome, Homecam's client and contract management platform, a native iOS app paired with a companion web dashboard for managing customer and job records.",
   image: '/images/projects/ecohome.png',
   liveUrl: 'https://www.ecohomereports.com/customers',
-  tags: ['Mobile'],
+  tags: ['iOS', 'Web'],
 }
 
 const canvassingApp: ProjectEntry = {
@@ -41,18 +42,9 @@ const teleVault: ProjectEntry = {
   orientation: 'portrait',
 }
 
-const contractManagement: ProjectEntry = {
-  title: 'Homecam: Client & Contract Management',
-  description:
-    'Client and contract management platform for a security electronics and solar panel company, built from scratch as a native iOS app with a companion web app.',
-  image: '/images/projects/placeholder-1.jpg',
-  tags: ['iOS', 'Web'],
-}
-
 export const featuredProjects: ProjectEntry[] = [ecoHome, canvassingApp, heavenlyArt, regaladoGroup, teleVault]
 
 export const projects: ProjectEntry[] = [
-  contractManagement,
   ecoHome,
   canvassingApp,
   heavenlyArt,
