@@ -25,7 +25,7 @@ export default function Tabs({ items }: { items: TabItem[] }) {
       <div
         role="tablist"
         aria-orientation="vertical"
-        className="relative flex gap-1 overflow-x-auto sm:flex-col sm:gap-6 sm:border-r-2 sm:border-navy-lightest sm:pr-6"
+        className="relative flex gap-1 overflow-x-auto sm:flex-col sm:gap-6 sm:overflow-visible sm:border-r-2 sm:border-navy-lightest sm:pr-6"
       >
         <span
           aria-hidden="true"
