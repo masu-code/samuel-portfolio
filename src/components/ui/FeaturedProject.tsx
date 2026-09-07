@@ -19,6 +19,18 @@ function ExternalLinkIcon() {
   )
 }
 
+function ChevronIcon({ flip }: { flip?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className={`h-8 w-8 ${flip ? 'rotate-180' : ''}`}
+    >
+      <path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0" />
+    </svg>
+  )
+}
+
 const slideVariants = {
   enter: (direction: number) => ({ x: direction >= 0 ? '100%' : '-100%', opacity: 0 }),
   center: { x: 0, opacity: 1 },
@@ -146,17 +158,17 @@ export default function FeaturedProject({ projects }: { projects: ProjectEntry[]
               type="button"
               aria-label="Previous"
               onClick={() => goTo(index - 1, -1)}
-              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 px-2 text-2xl text-slate-light hover:text-mint"
+              className="absolute inset-y-0 left-0 z-10 flex w-12 items-center justify-center text-slate-lightest opacity-50 transition-opacity hover:opacity-90 focus-visible:opacity-90 sm:w-16"
             >
-              &lsaquo;
+              <ChevronIcon />
             </button>
             <button
               type="button"
               aria-label="Next"
               onClick={() => goTo(index + 1, 1)}
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 px-2 text-2xl text-slate-light hover:text-mint"
+              className="absolute inset-y-0 right-0 z-10 flex w-12 items-center justify-center text-slate-lightest opacity-50 transition-opacity hover:opacity-90 focus-visible:opacity-90 sm:w-16"
             >
-              &rsaquo;
+              <ChevronIcon flip />
             </button>
           </>
         )}
